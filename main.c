@@ -89,6 +89,12 @@ static bool m_connected = false;
 #include "ble_sg.h"
 ble_sg_t m_sg;
 
+#if defined(ICM20948) 
+#include "ble_mpu.h"
+ble_mpu_t m_icm;
+#include "icm20948.h"
+#endif
+
 #if defined(SAADC_ENABLED) && SAADC_ENABLED == 1
 #include "nrf_drv_saadc.h"
 #define SAMPLES_IN_BUFFER 4
@@ -146,6 +152,9 @@ static nrf_ble_gatt_t m_gatt;                            /**< GATT module instan
 
 static ble_uuid_t m_adv_uuids[] =
     {
+#if defined(ICM20948)
+        {BLE_UUID_MPU_SERVICE_UUID, BLE_UUID_TYPE_BLE},
+#endif
         {BLE_UUID_SG_MEASUREMENT_SERVICE, BLE_UUID_TYPE_BLE},
         {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
@@ -182,7 +191,6 @@ static void m_sampling_timeout_handler(void *p_context) {
 
 static void battery_level_update(void) {
 //  ret_code_t err_code;
-//TODO: CALL SAADC
 #if defined(SAADC_ENABLED) && SAADC_ENABLED == 1
   //Enable load switch:
   nrf_gpio_pin_clear(BATTERY_LOAD_SWITCH_CTRL_PIN);
@@ -194,6 +202,7 @@ static void battery_level_update(void) {
 static void battery_level_meas_timeout_handler(void *p_context) {
   UNUSED_PARAMETER(p_context);
   battery_level_update();
+  // TODO: Get samples from ICM20948
 }
 //#endif
 
@@ -262,6 +271,9 @@ static void gatt_init(void) {
 static void services_init(void) {
   uint32_t err_code;
 /**@Device Information Service:*/
+#if defined(ICM20948)
+  ble_mpu_service_init(&m_icm);
+#endif
   ble_sg_service_init(&m_sg);
 
 #if defined(BLE_BAS_ENABLED) && BLE_BAS_ENABLED == 1
@@ -501,6 +513,9 @@ static void ble_evt_dispatch(ble_evt_t *p_ble_evt) {
   ble_bas_on_ble_evt(&m_bas, p_ble_evt);
 #endif
   ble_sg_on_ble_evt(&m_sg, p_ble_evt);
+#if defined(ICM20948)
+  ble_mpu_on_ble_evt(&m_icm, p_ble_evt);
+#endif
 }
 
 /**@brief Function for dispatching a system event to interested modules.
@@ -687,7 +702,6 @@ void saadc_init(void) {
 
   ret_code_t err_code;
   nrf_drv_saadc_config_t saadc_config;
-  //TODO: Adjust Configuration: SAADC
   saadc_config.low_power_mode = false;                    //Enable low power mode.
   saadc_config.resolution = NRF_SAADC_RESOLUTION_14BIT;   //Set SAADC resolution to 12-bit. This will make the SAADC output values from 0 (when input voltage is 0V) to 2^12=2048 (when input voltage is 3.6V for channel gain setting of 1/6).
   saadc_config.oversample = NRF_SAADC_OVERSAMPLE_4X;      //Set oversample to 4x. This will make the SAADC output a single averaged value when the SAMPLE task is triggered 4 times.
@@ -731,6 +745,10 @@ int main(void) {
   advertising_init();
   services_init();
   conn_params_init();
+  //TODO: Initialize ICM20948
+#if defined(ICM20948)
+  //icm_setup();
+#endif
   m_sg.sg_ch1_count = 0;
 
 #if defined(SAADC_ENABLED) && SAADC_ENABLED == 1
