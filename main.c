@@ -717,6 +717,16 @@ void saadc_init(void) {
 static void wait_for_event(void) {
   (void)sd_app_evt_wait();
 }
+
+static void gpio_init(void) {
+  #if LEDS_ENABLE == 1
+    nrf_gpio_cfg_output(LED_1);
+    nrf_gpio_cfg_output(LED_2);
+    nrf_gpio_pin_set(LED_1);
+    nrf_gpio_pin_set(LED_2);
+  #endif
+}
+
 /**@brief Function for application main entry.
  */
 int main(void) {
@@ -725,6 +735,7 @@ int main(void) {
   // Initialize.
   log_init();
   timers_init();
+  gpio_init();
   ble_stack_init();
   gap_params_init();
   gatt_init();

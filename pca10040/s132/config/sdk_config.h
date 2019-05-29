@@ -14,7 +14,7 @@
 #endif
 
 #ifndef LEDS_ENABLE
-#define LEDS_ENABLE 0
+#define LEDS_ENABLE 1
 #endif
 
 //==========================================================
