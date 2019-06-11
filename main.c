@@ -684,7 +684,7 @@ void saadc_callback(nrf_drv_saadc_evt_t const *p_event) {
     int i;
 
     for (i = 0; i < SAMPLES_IN_BUFFER; i++) {
-        NRF_LOG_INFO("%d\r\n", p_event->data.done.p_buffer[i]);
+//        NRF_LOG_INFO("%d\r\n", p_event->data.done.p_buffer[i]);
     }
     memcpy(&m_sg.sg_ch1_buffer[m_sg.sg_ch1_count], (uint8_t*) &p_event->data.done.p_buffer[0], SAMPLES_IN_BUFFER * 2);
     m_sg.sg_ch1_count += SAMPLES_IN_BUFFER * 2;
@@ -731,6 +731,16 @@ void saadc_init(void) {
 static void wait_for_event(void) {
   (void)sd_app_evt_wait();
 }
+
+static void gpio_init(void) {
+  #if LEDS_ENABLE == 1
+    nrf_gpio_cfg_output(LED_1);
+    nrf_gpio_cfg_output(LED_2);
+    nrf_gpio_pin_set(LED_1);
+    nrf_gpio_pin_set(LED_2);
+  #endif
+}
+
 /**@brief Function for application main entry.
  */
 int main(void) {
@@ -739,6 +749,7 @@ int main(void) {
   // Initialize.
   log_init();
   timers_init();
+  gpio_init();
   ble_stack_init();
   gap_params_init();
   gatt_init();
